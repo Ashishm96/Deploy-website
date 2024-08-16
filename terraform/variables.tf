@@ -26,9 +26,11 @@ variable "key_pair_name" {
 variable "ssh_private_key_path" {
   description = "Path to the SSH private key"
   type        = string
+  default     = "./terraform/keys/id_rsa"  # Updated path
 }
 
 variable "ssh_public_key_path" {
   description = "Path to the SSH public key"
   type        = string
+  default     = "./terraform/keys/id_rsa.pub"  # Updated path
 }
