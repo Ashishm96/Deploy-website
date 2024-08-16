@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  frontend:
+    build:
+      context: ../frontend
+    ports:
+      - "80:80"
+
+  store:
+    build:
+      context: ../store-website
+    ports:
+      - "3000:3000"
