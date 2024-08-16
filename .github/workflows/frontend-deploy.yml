@@ -6,52 +6,40 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-    - name: Build Docker image
-      run: |
-        docker build -t frontend-app -f ./frontend/Dockerfile ./frontend
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
-    - name: Save Docker image to file
-      run: |
-        docker save frontend-app | gzip > frontend-app.tar.gz
+      - name: Build Docker image
+        run: |
+          docker build -t my-frontend-image -f frontend/Dockerfile .
 
-    - name: Upload Docker image artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: frontend-app
-        path: frontend-app.tar.gz
+      - name: Upload Docker image as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-image
+          path: frontend-image.tar
 
-    - name: Set up SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-
-    - name: Download Docker image artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: frontend-app
-
-    - name: Deploy to EC2
-      run: |
-        scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no frontend-app.tar.gz ec2-user@${{ secrets.FRONTEND_IP }}:/home/ec2-user/
-        ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.FRONTEND_IP }} << 'EOF'
-          # Install Docker if not already installed
-          sudo apt update
-          sudo apt install -y docker.io
-
-          # Load Docker image and run the container
-          docker load < /home/ec2-user/frontend-app.tar.gz
-          docker stop $(docker ps -q --filter ancestor=frontend-app) || true
-          docker rm $(docker ps -a -q --filter ancestor=frontend-app) || true
-          docker run -d -p 80:80 frontend-app
-        EOF
+      - name: Deploy to EC2
+        uses: appleboy/drone-ssh@v1
+        with:
+          host: ${{ secrets.FRONTEND_IP }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker load -i frontend-image.tar
+            docker run -d -p 80:80 my-frontend-image

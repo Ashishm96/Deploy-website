@@ -1,5 +1,5 @@
 # Use the official Node.js image
-FROM node:18
+FROM node:18 AS build
 
 # Set the working directory
 WORKDIR /app
@@ -11,8 +11,11 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
-# Expose port 3000
-EXPOSE 3000
+# Build the React app
+RUN npm run build
 
-# Run the application
-CMD ["node", "app.js"]
+# Serve the app using a simple HTTP server
+FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
