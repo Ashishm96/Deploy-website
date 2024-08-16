@@ -20,8 +20,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          ssh ubuntu@${{ secrets.FRONTEND_IP }} "docker build -t my-frontend-image -f /home/ubuntu/frontend/Dockerfile /home/ubuntu/frontend"
-
+            ssh -o ConnectTimeout=60 ubuntu@${{ secrets.FRONTEND_IP }} "docker build -t my-frontend-image -f /home/ubuntu/frontend/Dockerfile /home/ubuntu/frontend"
+  
       - name: Run Docker container
         run: |
           ssh ubuntu@${{ secrets.FRONTEND_IP }} "docker run -d -p 80:80 my-frontend-image"
