@@ -2,14 +2,14 @@ version: '3'
 services:
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "80:80"
 
   store:
     build:
-      context: .
-      dockerfile: store-website/Dockerfile
+      context: ./store-website
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"

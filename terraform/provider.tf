@@ -1,6 +1,6 @@
 resource "aws_key_pair" "key_pair" {
-  key_name   = "terraform-key"
-  public_key = file("${var.ssh_public_key_path}")  # Updated public key path
+  key_name   = var.key_pair_name
+  public_key = file(var.ssh_public_key_path)
 }
 
 provider "aws" {
